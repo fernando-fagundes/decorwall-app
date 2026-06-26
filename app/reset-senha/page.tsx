@@ -7,8 +7,6 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 export default function ResetSenhaPage() {
-  const supabase = createClient();
-
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
@@ -20,6 +18,7 @@ export default function ResetSenhaPage() {
     setLoading(true);
 
     try {
+    const supabase = createClient();
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/atualizar-senha`,
       });

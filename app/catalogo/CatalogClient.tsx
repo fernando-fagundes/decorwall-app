@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -11,7 +11,14 @@ type Catalog = { id: string; name: string; created_at: string };
 
 export default function CatalogClient() {
   const router = useRouter();
-  const supabase = createClient();
+  const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
+
+  function getSupabase() {
+    if (!supabaseRef.current) {
+      supabaseRef.current = createClient();
+    }
+    return supabaseRef.current;
+  }
 
   const [user, setUser] = useState<User | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -19,13 +26,14 @@ export default function CatalogClient() {
   const [catalogs, setCatalogs] = useState<Catalog[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [catalogName, setCatalogName] = useState("Novo Cat\u00e1logo");
+  const [catalogName, setCatalogName] = useState("Novo Catálogo");
   const [saving, setSaving] = useState(false);
   const [showNameInput, setShowNameInput] = useState(false);
   const [activeCatalogId, setActiveCatalogId] = useState<string | null>(null);
 
   // Load user
   useEffect(() => {
+    const supabase = getSupabase();
     supabase.auth.getUser().then(({ data }) => setUser(data.user));
     const { data: listener } = supabase.auth.onAuthStateChange((_e, session) => {
       setUser(session?.user ?? null);
@@ -35,6 +43,7 @@ export default function CatalogClient() {
 
   // Load products & categories
   useEffect(() => {
+    const supabase = getSupabase();
     supabase.from("products").select("*").order("display_order").then(({ data }) => {
       if (data) {
         setProducts(data);
@@ -49,6 +58,7 @@ export default function CatalogClient() {
   // Load user catalogs
   useEffect(() => {
     if (!user) return;
+    const supabase = getSupabase();
     supabase
       .from("catalogs")
       .select("*")
@@ -77,6 +87,7 @@ export default function CatalogClient() {
     if (!user) return;
     setSaving(true);
     try {
+      const supabase = getSupabase();
       const { data: catalog, error } = await supabase
         .from("catalogs")
         .insert({ user_id: user.id, name: catalogName })
@@ -93,18 +104,19 @@ export default function CatalogClient() {
       setCatalogs((prev) => [catalog, ...prev]);
       setSelectedCategories([]);
       setShowNameInput(false);
-      setCatalogName("Novo Cat\u00e1logo");
+      setCatalogName("Novo Catálogo");
       setActiveCatalogId(catalog.id);
     } catch (err) {
       console.error(err);
-      alert("Erro ao salvar cat\u00e1logo. Tente novamente.");
+      alert("Erro ao salvar catálogo. Tente novamente.");
     } finally {
       setSaving(false);
     }
   };
 
   const handleDeleteCatalog = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir este cat\u00e1logo?")) return;
+    if (!confirm("Tem certeza que deseja excluir este catálogo?")) return;
+    const supabase = getSupabase();
     await supabase.from("catalogs").delete().eq("id", id);
     setCatalogs((prev) => prev.filter((c) => c.id !== id));
     if (activeCatalogId === id) setActiveCatalogId(null);
@@ -116,7 +128,7 @@ export default function CatalogClient() {
       <div className="flex-1 min-w-0">
         <div className="bg-white border border-gray-200 rounded-2xl p-6">
           <h1 className="text-2xl font-bold text-gray-900 text-center mb-6">
-            Cat\u00e1logo Online Decorwall
+            Catálogo Online Decorwall
           </h1>
 
           {/* Product type selector */}
@@ -153,7 +165,7 @@ export default function CatalogClient() {
           {/* Category grid */}
           <div className="border border-gray-200 rounded-xl p-4">
             <h2 className="font-semibold text-gray-800 text-center mb-4">
-              Categorias dispon\u00edveis
+              Categorias disponíveis
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
               {filteredCategories.map((cat) => (
@@ -184,7 +196,7 @@ export default function CatalogClient() {
                   onClick={handleCreateCatalog}
                   className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors"
                 >
-                  Criar cat\u00e1logo
+                  Criar catálogo
                 </button>
               </div>
             )}
@@ -198,17 +210,17 @@ export default function CatalogClient() {
           onClick={handleCreateCatalog}
           className="w-full bg-gray-900 text-white rounded-xl py-3 px-4 font-medium hover:bg-gray-700 transition-colors text-sm"
         >
-          Criar um cat\u00e1logo personalizado
+          Criar um catálogo personalizado
         </button>
 
         <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-          <h3 className="font-semibold text-gray-800 mb-3">Meus cat\u00e1logos</h3>
+          <h3 className="font-semibold text-gray-800 mb-3">Meus catálogos</h3>
           {!user ? (
             <p className="text-sm text-gray-500">
-              <a href="/login" className="underline">Fa\u00e7a login</a> para ver seus cat\u00e1logos.
+              <a href="/login" className="underline">Faça login</a> para ver seus catálogos.
             </p>
           ) : catalogs.length === 0 ? (
-            <p className="text-sm text-gray-500">Nenhum cat\u00e1logo criado ainda.</p>
+            <p className="text-sm text-gray-500">Nenhum catálogo criado ainda.</p>
           ) : (
             <ul className="space-y-2">
               {catalogs.map((catalog) => (
@@ -239,13 +251,13 @@ export default function CatalogClient() {
       {showNameInput && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
-            <h2 className="font-bold text-lg text-gray-900 mb-4">Nome do cat\u00e1logo</h2>
+            <h2 className="font-bold text-lg text-gray-900 mb-4">Nome do catálogo</h2>
             <input
               type="text"
               value={catalogName}
               onChange={(e) => setCatalogName(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-gray-400"
-              placeholder="Ex: Cat\u00e1logo Ver\u00e3o 2025"
+              placeholder="Ex: Catálogo Verão 2025"
             />
             <div className="flex gap-3">
               <button

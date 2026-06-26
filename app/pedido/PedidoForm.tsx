@@ -32,8 +32,6 @@ interface Props {
 }
 
 export default function PedidoForm({ userId }: Props) {
-  const supabase = createClient();
-
   // CNPJ
   const [cnpj, setCnpj] = useState("");
   const [razaoSocial, setRazaoSocial] = useState("");
@@ -128,6 +126,7 @@ export default function PedidoForm({ userId }: Props) {
     }
 
     setLoading(true);
+    const supabase = createClient();
     const { error } = await supabase.from("pedidos").insert({
       user_id: userId,
       cnpj: cnpjDigits,

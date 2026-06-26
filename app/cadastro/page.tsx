@@ -7,8 +7,6 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 export default function CadastroPage() {
-  const supabase = createClient();
-
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
@@ -33,6 +31,7 @@ export default function CadastroPage() {
 
     setLoading(true);
     try {
+      const supabase = createClient();
       const { error } = await supabase.auth.signUp({
         email,
         password,

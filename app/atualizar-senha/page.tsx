@@ -9,7 +9,6 @@ import { createClient } from "@/lib/supabase/client";
 
 export default function AtualizarSenhaPage() {
   const router = useRouter();
-  const supabase = createClient();
 
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -31,6 +30,7 @@ export default function AtualizarSenhaPage() {
 
     setLoading(true);
     try {
+    const supabase = createClient();
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
       router.push("/painel");
