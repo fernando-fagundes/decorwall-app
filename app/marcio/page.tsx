@@ -1,10 +1,10 @@
 import LandPage from "@/components/LandPage";
 
 export const metadata = {
-  title: "Decorwall — Cristina",
+  title: "Decorwall — Márcio",
   description: "Papéis de parede e revestimentos personalizados de alta qualidade.",
 };
 
-export default function CristinaPage() {
-  return <LandPage vendedor="Cristina" whatsapp="555193441137" />;
+export default function MarcioPage() {
+  return <LandPage vendedor="Márcio" whatsapp="5551985760225" />;
 }

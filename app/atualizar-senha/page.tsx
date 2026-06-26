@@ -1,57 +1,96 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 
 export default function AtualizarSenhaPage() {
-  const supabase = createClient();
   const router = useRouter();
-  const [senha, setSenha] = useState("");
-  const [confirmar, setConfirmar] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [mensagem, setMensagem] = useState("");
-  const [erro, setErro] = useState("");
+  const supabase = createClient();
 
-  async function handleSubmit(e: React.FormEvent) {
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (senha !== confirmar) {
-      setErro("As senhas não coincidem.");
+    setError("");
+
+    if (password !== confirm) {
+      setError("As senhas não coincidem.");
       return;
     }
-    setLoading(true);
-    const { error } = await supabase.auth.updateUser({ password: senha });
-    setLoading(false);
-    if (error) {
-      setErro(error.message);
-    } else {
-      setMensagem("Senha atualizada com sucesso!");
-      setErro("");
-      setTimeout(() => router.push("/login"), 2000);
+    if (password.length < 6) {
+      setError("A senha deve ter no mínimo 6 caracteres.");
+      return;
     }
-  }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+      router.push("/painel");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erro ao atualizar senha.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-          <h1 className="text-xl font-semibold text-gray-900 mb-6">
-            Nova senha
-          </h1>
-          {mensagem && <p className="text-green-600 mb-4 text-sm">{mensagem}</p>}
-          {erro && <p className="text-red-500 mb-4 text-sm">{erro}</p>}
-          <div className="mb-4">
-            <label className="block text-sm text-gray-700 mb-1">Nova senha</label>
-            <input type="password" value={senha} onChange={(e) => setSenha(e.target.value)} required className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
-          </div>
-          <div className="mb-6">
-            <label className="block text-sm text-gray-700 mb-1">Confirmar senha</label>
-            <input type="password" value={confirmar} onChange={(e) => setConfirmar(e.target.value)} required className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
-          </div>
-          <button type="submit" disabled={loading} className="w-full bg-gray-900 text-white py-2.5 rounded-lg font-medium hover:bg-gray-700 transition-colors disabled:opacity-50">
-            {loading ? "Atualizando..." : "Atualizar senha"}
-          </button>
-        </form>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <Link href="/" className="text-3xl font-light tracking-tight">
+            <span className="text-gray-800">foto</span>
+            <span className="text-red-700">mural</span>
+          </Link>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+          <h1 className="text-lg font-semibold text-gray-800 mb-6">Nova senha</h1>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nova senha</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                placeholder="Mínimo 6 caracteres"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-400"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar senha</label>
+              <input
+                type="password"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                required
+                placeholder="Repita a senha"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-300 focus:border-red-400"
+              />
+            </div>
+
+            {error && (
+              <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-red-700 text-white rounded-lg py-3 text-sm font-medium hover:bg-red-800 disabled:opacity-50 transition-colors"
+            >
+              {loading ? "Salvando..." : "Salvar nova senha"}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
