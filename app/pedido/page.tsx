@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PedidoForm from "./PedidoForm";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Decorwall — Novo Pedido",
   description: "Formulário de pedido para revendedores.",
