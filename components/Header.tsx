@@ -63,7 +63,7 @@ export default function Header() {
 
         {/* User */}
         <div className="flex items-center gap-3">
-          {user ? (
+          {user && (
             <div className="relative">
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
@@ -77,8 +77,8 @@ export default function Header() {
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2">
                   <div className="px-4 py-2 text-xs text-gray-400 truncate">{user.email}</div>
                   <hr className="my-1" />
-                  <Link href="/catalogo" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
-                    Meus Cat\u00e1logos
+                  <Link href="/painel" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setMenuOpen(false)}>
+                    Painel
                   </Link>
                   <button onClick={handleSignOut} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
                     Sair
@@ -86,15 +86,6 @@ export default function Header() {
                 </div>
               )}
             </div>
-          ) : (
-            <Link
-              href="/login"
-              className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
-            >
-              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            </Link>
           )}
 
           {/* Mobile menu button */}
