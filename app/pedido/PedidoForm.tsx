@@ -61,7 +61,7 @@ export default function PedidoForm({ userId }: Props) {
     if (digits.length !== 14) return;
     setCnpjLoading(true); setCnpjError("");
     try {
-      const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`);
+      const res = await fetch('/api/cnpj?cnpj=' + digits);
       if (!res.ok) throw new Error();
       const d = await res.json();
       setRazaoSocial(d.razao_social || "");
