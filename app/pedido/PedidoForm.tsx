@@ -159,7 +159,7 @@ export default function PedidoForm({ userId }: Props) {
           <div>
             <label className="block text-sm text-gray-600 mb-1">CNPJ</label>
             <div className="flex gap-2">
-              <input type="text" value={cnpj} onChange={e => setCnpj(formatCnpj(e.target.value))} onBlur={() => buscarCnpj(cnpj)} placeholder="00.000.000/0000-00" className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" required />
+              <input type="text" value={cnpj} onChange={e => { const f = formatCnpj(e.target.value); setCnpj(f); if (f.replace(/\D/g, "").length === 14) buscarCnpj(f); }} onBlur={() => buscarCnpj(cnpj)} placeholder="00.000.000/0000-00" className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" required />
               {cnpjLoading && <span className="self-center text-xs text-gray-400">Buscando...</span>}
             </div>
             {cnpjError && <p className="text-xs text-red-500 mt-1">{cnpjError}</p>}
@@ -316,4 +316,6 @@ export default function PedidoForm({ userId }: Props) {
       <button type="submit" disabled={loading} className="w-full bg-gray-900 text-white py-3 rounded-xl font-medium hover:bg-gray-700 transition-colors disabled:opacity-50">
         {loading ? "Enviando pedido..." : "Enviar pedido"}
       </button>
-    </for
+    </form>
+  );
+}
