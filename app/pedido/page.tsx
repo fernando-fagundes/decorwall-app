@@ -20,7 +20,7 @@ export default async function PedidoPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("aprovado, role, full_name")
+    .select("aprovado, role, nome")
     .eq("id", user.id)
     .single();
 
@@ -35,7 +35,7 @@ export default async function PedidoPage() {
             <span className="text-red-700">Wall</span>
           </span>
           <span className="text-sm text-gray-500">
-            Olá, {profile?.full_name || user.email}
+            Olá, {profile?.nome || user.email}
           </span>
         </div>
       </header>
@@ -43,7 +43,7 @@ export default async function PedidoPage() {
       <div className="max-w-3xl mx-auto px-4 py-10">
         <h1 className="text-2xl font-semibold text-gray-900 mb-1">Novo Pedido</h1>
         <p className="text-gray-500 mb-8">Preencha os dados abaixo para registrar seu pedido.</p>
-        <PedidoForm userId={user.id} vendedorNome={profile?.full_name || user.email || ""} />
+        <PedidoForm userId={user.id} vendedorNome={profile?.nome || user.email || ""} />
       </div>
     </main>
   );
