@@ -103,7 +103,7 @@ export default function PedidoForm({ userId }: Props) {
     for (const [paredeId, file] of Object.entries(imagensPorParede)) {
       if (!file) continue;
       const ext = file.name.split(".").pop() || "jpg";
-      const path = `pedidos/${Date.now()}_${paredeId].${ext}`;
+      const path = `pedidos/${Date.now()}_${paredeId}.${ext}`;
       const { error: uploadError } = await getSupabase().storage.from("layouts").upload(path, file);
       if (!uploadError) {
         const { data: urlData } = getSupabase().storage.from("layouts").getPublicUrl(path);
