@@ -14,7 +14,7 @@ interface Props { userId: string; vendedorNome?: string; }
 
 function uid() { return Math.random().toString(36).slice(2, 9); }
 function n(v: string) { return parseFloat(v) || 0; }
-// cm -> mÂ²: divide por 10000
+// cm -> m²: divide por 10000
 function areaBruta(p: Parede) { return (n(p.largura) * n(p.altura)) / 10000; }
 function areaDeducoes(p: Parede) { return p.deducoes.reduce((acc, d) => acc + (n(d.largura) * n(d.altura)) / 10000, 0); }
 function areaLiquida(p: Parede) { return Math.max(0, areaBruta(p) - areaDeducoes(p)); }
@@ -23,7 +23,6 @@ function fmt(v: number) { return v.toLocaleString("pt-BR", { minimumFractionDigi
 function newParede(num: number, produto?: Produto): Parede {
   return { id: uid(), nome: `Parede ${num}`, largura: "", altura: "", produto_id: produto?.id ?? "", produto_nome: produto?.name ?? "", preco_m2: produto?.preco_m2 ?? 0, deducoes: [] };
 }
-const CONDICOES = ["Ã vista (PIX)", "Boleto 30 dias", "Boleto 30/60", "Boleto 30/60/90", "CartÃ£o de CrÃ©dito"];
 
 export default function PedidoForm({ userId }: Props) {
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
@@ -40,7 +39,6 @@ export default function PedidoForm({ userId }: Props) {
   const [paredes, setParedes] = useState<Parede[]>([]);
   const [imagensPorParede, setImagensPorParede] = useState<Record<string, File | null>>({});
   const [transportadora, setTransportadora] = useState("");
-  const [condicao, setCondicao] = useState(CONDICOES[0]);
   const [observacoes, setObservacoes] = useState("");
   const [loading, setLoading] = useState(false);
   const [sucesso, setSucesso] = useState(false);
@@ -71,7 +69,7 @@ export default function PedidoForm({ userId }: Props) {
       setCidade(d.municipio || "");
       setEstado(d.uf || "");
     } catch {
-      setCnpjError("CNPJ nÃ£o encontrado ou invÃ¡lido.");
+      setCnpjError("CNPJ não encontrado ou inválido.");
       setRazaoSocial(""); setEndereco(""); setCidade(""); setEstado("");
     } finally { setCnpjLoading(false); }
   }
@@ -92,7 +90,7 @@ export default function PedidoForm({ userId }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault(); setErro("");
-    if (cnpj.replace(/\D/g, "").length !== 14) { setErro("Informe um CNPJ vÃ¡lido."); return; }
+    if (cnpj.replace(/\D/g, "").length !== 14) { setErro("Informe um CNPJ válido."); return; }
     if (paredes.length === 0) { setErro("Adicione ao menos uma parede."); return; }
     for (const p of paredes) {
       if (!n(p.largura) || !n(p.altura)) { setErro(`Informe medidas de "${p.nome}".`); return; }
@@ -105,7 +103,7 @@ export default function PedidoForm({ userId }: Props) {
     for (const [paredeId, file] of Object.entries(imagensPorParede)) {
       if (!file) continue;
       const ext = file.name.split(".").pop() || "jpg";
-      const path = `pedidos/${Date.now()}_${paredeId}.${ext}`;
+      const path = `pedidos/${Date.now()}_${paredeId].${ext}`;
       const { error: uploadError } = await getSupabase().storage.from("layouts").upload(path, file);
       if (!uploadError) {
         const { data: urlData } = getSupabase().storage.from("layouts").getPublicUrl(path);
@@ -135,7 +133,6 @@ export default function PedidoForm({ userId }: Props) {
       endereco, cidade, estado,
       itens,
       valor_total: parseFloat(totalGeral.toFixed(2)),
-      condicao_pagamento: condicao,
       observacoes,
       transportadora,
     });
@@ -145,10 +142,10 @@ export default function PedidoForm({ userId }: Props) {
 
   if (sucesso) return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
-      <div className="text-5xl mb-4">â</div>
+      <div className="text-5xl mb-4">✅</div>
       <h2 className="text-xl font-semibold text-gray-900 mb-2">Pedido registrado!</h2>
-      <p className="text-gray-500 mb-6">Em breve nossa equipe entrarÃ¡ em contato.</p>
-      <button onClick={() => { setSucesso(false); setCnpj(""); setRazaoSocial(""); setEndereco(""); setCidade(""); setEstado(""); setParedes([newParede(1, produtos[0])]); setImagensPorParede({}); setTransportadora(""); setCondicao(CONDICOES[0]); setObservacoes(""); }} className="bg-gray-900 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors">Novo pedido</button>
+      <p className="text-gray-500 mb-6">Em breve nossa equipe entrará em contato.</p>
+      <button onClick={() => { setSucesso(false); setCnpj(""); setRazaoSocial(""); setEndereco(""); setCidade(""); setEstado(""); setParedes([newParede(1, produtos[0])]); setImagensPorParede({}); setTransportadora(""); setObservacoes(""); }} className="bg-gray-900 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors">Novo pedido</button>
     </div>
   );
 
@@ -168,12 +165,12 @@ export default function PedidoForm({ userId }: Props) {
             {cnpjError && <p className="text-xs text-red-500 mt-1">{cnpjError}</p>}
           </div>
           <div>
-            <label className="block text-sm text-gray-600 mb-1">RazÃ£o Social</label>
+            <label className="block text-sm text-gray-600 mb-1">Razão Social</label>
             <input type="text" value={razaoSocial} onChange={e => setRazaoSocial(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" required />
           </div>
           <div className="sm:col-span-2">
             <label className="block text-sm text-gray-600 mb-1">
-              EndereÃ§o <span className="text-xs text-gray-400 font-normal">(preenchido automaticamente pelo CNPJ)</span>
+              Endereço <span className="text-xs text-gray-400 font-normal">(preenchido automaticamente pelo CNPJ)</span>
             </label>
             <input type="text" value={endereco} onChange={e => setEndereco(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
           </div>
@@ -191,7 +188,7 @@ export default function PedidoForm({ userId }: Props) {
       {/* 2. Paredes */}
       <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <h2 className="text-base font-semibold text-gray-800 mb-1">2. Paredes</h2>
-        <p className="text-xs text-gray-400 mb-5">Medidas em centÃ­metros. MÃ¡ximo 1 desconto por parede.</p>
+        <p className="text-xs text-gray-400 mb-5">Medidas em centímetros. Máximo 1 desconto por parede.</p>
         <div className="space-y-6">
           {paredes.map((parede, idx) => {
             const bruta = areaBruta(parede);
@@ -204,7 +201,7 @@ export default function PedidoForm({ userId }: Props) {
                 <div className="flex items-center gap-3 bg-gray-50 px-4 py-3 border-b border-gray-200">
                   <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide w-6">{idx + 1}</span>
                   <input type="text" value={parede.nome} onChange={e => updateParede(parede.id, { nome: e.target.value })} className="flex-1 bg-transparent text-sm font-medium text-gray-800 focus:outline-none border-b border-transparent focus:border-gray-400" />
-                  {paredes.length > 1 && <button type="button" onClick={() => removeParede(parede.id)} className="text-gray-300 hover:text-red-400 text-xl leading-none transition-colors">Ã</button>}
+                  {paredes.length > 1 && <button type="button" onClick={() => removeParede(parede.id)} className="text-gray-300 hover:text-red-400 text-xl leading-none transition-colors">×</button>}
                 </div>
                 <div className="p-4 space-y-4">
                   {/* Medidas + Produto */}
@@ -221,7 +218,7 @@ export default function PedidoForm({ userId }: Props) {
                       <label className="block text-xs text-gray-500 mb-1">Produto</label>
                       <select value={parede.produto_id} onChange={e => selectProduto(parede.id, e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900">
                         {produtos.length === 0 && <option value="">Carregando...</option>}
-                        {produtos.map(p => <option key={p.id} value={p.id}>{p.name} â R$ {fmt(p.preco_m2)}/mÂ²</option>)}
+                        {produtos.map(p => <option key={p.id} value={p.id}>{p.name} — R$ {fmt(p.preco_m2)}/m²</option>)}
                       </select>
                     </div>
                   </div>
@@ -235,12 +232,12 @@ export default function PedidoForm({ userId }: Props) {
                           <span className="text-xs font-medium text-orange-600 w-14 shrink-0">{d.tipo}</span>
                           <div className="flex items-center gap-1 flex-1">
                             <input type="number" min="0" step="1" value={d.largura} onChange={e => updateDeducao(parede.id, d.id, { largura: e.target.value })} placeholder="Larg." className="w-20 border border-orange-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-orange-400" />
-                            <span className="text-gray-400 text-xs">Ã</span>
+                            <span className="text-gray-400 text-xs">×</span>
                             <input type="number" min="0" step="1" value={d.altura} onChange={e => updateDeducao(parede.id, d.id, { altura: e.target.value })} placeholder="Alt." className="w-20 border border-orange-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-orange-400" />
                             <span className="text-gray-400 text-xs">cm</span>
-                            {(n(d.largura) && n(d.altura)) ? <span className="text-orange-500 text-xs ml-1">â{fmt((n(d.largura) * n(d.altura)) / 10000)} mÂ²</span> : null}
+                            {(n(d.largura) && n(d.altura)) ? <span className="text-orange-500 text-xs ml-1">−{fmt((n(d.largura) * n(d.altura)) / 10000)} m²</span> : null}
                           </div>
-                          <button type="button" onClick={() => removeDeducao(parede.id, d.id)} className="text-orange-300 hover:text-red-400 text-lg leading-none">Ã</button>
+                          <button type="button" onClick={() => removeDeducao(parede.id, d.id)} className="text-orange-300 hover:text-red-400 text-lg leading-none">×</button>
                         </div>
                       ))}
                     </div>
@@ -261,14 +258,14 @@ export default function PedidoForm({ userId }: Props) {
                       <label className="cursor-pointer">
                         <span className="inline-flex items-center gap-1.5 text-xs border border-dashed border-gray-300 text-gray-500 rounded-lg px-3 py-1.5 hover:bg-gray-50 hover:border-gray-400 transition-colors">
                           <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                          {imagem ? imagem.name.slice(0, 24) + (imagem.name.length > 24 ? "â¦" : "") : "Selecionar imagem"}
+                          {imagem ? imagem.name.slice(0, 24) + (imagem.name.length > 24 ? "…" : "") : "Selecionar imagem"}
                         </span>
                         <input type="file" accept="image/*" className="hidden" onChange={e => setImagemParede(parede.id, e.target.files?.[0] ?? null)} />
                       </label>
                       {imagem && (
                         <>
                           <img src={URL.createObjectURL(imagem)} alt="preview" className="h-10 w-10 object-cover rounded-lg border border-gray-200" />
-                          <button type="button" onClick={() => setImagemParede(parede.id, null)} className="text-gray-300 hover:text-red-400 text-lg leading-none" title="Remover imagem">Ã</button>
+                          <button type="button" onClick={() => setImagemParede(parede.id, null)} className="text-gray-300 hover:text-red-400 text-lg leading-none" title="Remover imagem">×</button>
                         </>
                       )}
                     </div>
@@ -277,9 +274,9 @@ export default function PedidoForm({ userId }: Props) {
                   {/* Barra de resumo */}
                   {bruta > 0 && (
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 bg-gray-50 rounded-lg px-4 py-2 border border-gray-100">
-                      <span>Ãrea bruta: <strong className="text-gray-700">{fmt(bruta)} mÂ²</strong></span>
-                      {ded > 0 && <span>Desconto: <strong className="text-orange-600">â{fmt(ded)} mÂ²</strong></span>}
-                      <span>Ãrea lÃ­quida: <strong className="text-gray-700">{fmt(liq)} mÂ²</strong></span>
+                      <span>Área bruta: <strong className="text-gray-700">{fmt(bruta)} m²</strong></span>
+                      {ded > 0 && <span>Desconto: <strong className="text-orange-600">−{fmt(ded)} m²</strong></span>}
+                      <span>Área líquida: <strong className="text-gray-700">{fmt(liq)} m²</strong></span>
                       <span className="ml-auto text-sm font-semibold text-gray-800">R$ {fmt(sub)}</span>
                     </div>
                   )}
@@ -309,21 +306,10 @@ export default function PedidoForm({ userId }: Props) {
         />
       </section>
 
-      {/* 4. Pagamento e observaÃ§Ãµes */}
+      {/* Observações */}
       <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-base font-semibold text-gray-800 mb-4">4. Pagamento e observaÃ§Ãµes</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">CondiÃ§Ã£o de pagamento</label>
-            <select value={condicao} onChange={e => setCondicao(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" required>
-              {CONDICOES.map(c => <option key={c}>{c}</option>)}
-            </select>
-          </div>
-          <div className="sm:col-span-2">
-            <label className="block text-sm text-gray-600 mb-1">ObservaÃ§Ãµes</label>
-            <textarea value={observacoes} onChange={e => setObservacoes(e.target.value)} rows={3} placeholder="Prazo de entrega, informaÃ§Ãµes adicionais..." className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 resize-none" />
-          </div>
-        </div>
+        <h2 className="text-base font-semibold text-gray-800 mb-4">4. Observações</h2>
+        <textarea value={observacoes} onChange={e => setObservacoes(e.target.value)} rows={3} placeholder="Prazo de entrega, informações adicionais..." className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 resize-none" />
       </section>
 
       {erro && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{erro}</p>}
