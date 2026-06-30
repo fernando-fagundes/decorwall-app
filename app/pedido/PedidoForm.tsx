@@ -10,7 +10,7 @@ interface Produto {
 }
 interface Deducao { id: string; tipo: "Porta" | "Janela" | "Outro"; largura: string; altura: string; }
 interface Parede { id: string; nome: string; largura: string; altura: string; produto_id: string; produto_nome: string; preco_m2: number; deducoes: Deducao[]; layout_url?: string; layoutUploading?: boolean; }
-interface Props { userId: string; vendedorNome?: string; }
+interface Props { userId?: string | null; }
 
 function uid() { return Math.random().toString(36).slice(2, 9); }
 function n(v: string) { return parseFloat(v) || 0; }
@@ -98,7 +98,7 @@ export default function PedidoForm({ userId }: Props) {
     updateParede(paredeId, { layoutUploading: true });
     try {
       const ext = file.name.split(".").pop();
-      const path = userId + "/" + paredeId + "-" + Date.now() + "." + ext;
+      const path = (userId || "anonimo") + "/" + paredeId + "-" + Date.now() + "." + ext;
       const { error } = await getSupabase().storage.from("layouts").upload(path, file, { upsert: true });
       if (error) throw error;
       const { data } = getSupabase().storage.from("layouts").getPublicUrl(path);
@@ -131,37 +131,26 @@ export default function PedidoForm({ userId }: Props) {
     }));
 
     setLoading(true);
-
-    const { data: clienteData, error: clienteError } = await getSupabase()
-      .from("clientes")
-      .upsert(
-        { cnpj: cnpjDigits, razao_social: razaoSocial, endereco, cidade, estado, telefone },
-        { onConflict: "cnpj" }
-      )
-      .select("id")
-      .single();
-
-    if (clienteError) { setErro("Erro ao registrar cliente: " + clienteError.message); setLoading(false); return; }
-
-    const { data: pedidoData, error: pedidoError } = await getSupabase()
-      .from("pedidos")
-      .insert({
-        user_id: userId,
-        cliente_id: clienteData.id,
-        cnpj: cnpjDigits,
-        razao_social: razaoSocial,
-        endereco, cidade, estado,
-        itens,
-        valor_total: parseFloat(totalGeral.toFixed(2)),
-        transportadora,
-        observacoes,
-      })
-      .select("numero")
-      .single();
-
-    setLoading(false);
-    if (pedidoError) { setErro("Erro ao enviar pedido: " + pedidoError.message); }
-    else { setNumeroPedido(pedidoData?.numero ?? ""); setSucesso(true); }
+    try {
+      const res = await fetch("/api/pedido", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cnpjDigits, razaoSocial, endereco, cidade, estado, telefone,
+          itens,
+          valorTotal: parseFloat(totalGeral.toFixed(2)),
+          transportadora, observacoes,
+          userId: userId || null,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setErro(json.error || "Erro ao enviar pedido."); }
+      else { setNumeroPedido(json.numero ?? ""); setSucesso(true); }
+    } catch {
+      setErro("Erro de conexao. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   function resetForm() {
@@ -292,7 +281,6 @@ export default function PedidoForm({ userId }: Props) {
                       <span className="ml-auto text-sm font-semibold text-gray-800">R$ {fmt(sub)}</span>
                     </div>
                   )}
-                  {/* Layout do ambiente */}
                   <div className="flex items-center gap-3 pt-1 border-t border-gray-100">
                     <label className={`cursor-pointer flex items-center gap-1.5 text-xs border border-dashed rounded-lg px-3 py-1.5 transition-colors ${parede.layoutUploading ? "border-gray-200 text-gray-300 cursor-not-allowed" : "border-blue-300 text-blue-500 hover:bg-blue-50"}`}>
                       <input type="file" accept="image/*,.pdf" className="hidden" disabled={!!parede.layoutUploading}
