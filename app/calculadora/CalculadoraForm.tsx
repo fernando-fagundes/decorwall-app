@@ -4,12 +4,16 @@ import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 interface Produto {
-  id: string; name: string; preco_m2: number;
+  id: string; name: string;
+  preco_m2: number;
+  preco_consumidor_m2: number | null;
   largura_min: number; largura_max: number;
   altura_min: number; altura_max: number;
 }
 interface Deducao { id: string; tipo: "Porta" | "Janela" | "Outro"; largura: string; altura: string; }
 interface Parede { id: string; nome: string; largura: string; altura: string; produto_id: string; produto_nome: string; preco_m2: number; deducoes: Deducao[]; }
+
+type TipoPreco = "lojista" | "consumidor";
 
 function uid() { return Math.random().toString(36).slice(2, 9); }
 function n(v: string) { return parseFloat(v) || 0; }
@@ -18,31 +22,54 @@ function areaDeducoes(p: Parede) { return p.deducoes.reduce((acc, d) => acc + (n
 function areaLiquida(p: Parede) { return Math.max(0, areaBruta(p) - areaDeducoes(p)); }
 function subtotal(p: Parede) { return areaLiquida(p) * p.preco_m2; }
 function fmt(v: number) { return v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-function newParede(num: number, produto?: Produto): Parede {
-  return { id: uid(), nome: `Parede ${num}`, largura: "", altura: "", produto_id: produto?.id ?? "", produto_nome: produto?.name ?? "", preco_m2: produto?.preco_m2 ?? 0, deducoes: [] };
+
+function getPreco(prod: Produto, tipo: TipoPreco): number {
+  if (tipo === "consumidor") return prod.preco_consumidor_m2 ?? prod.preco_m2;
+  return prod.preco_m2;
 }
 
-const CONDICOES = ["A vista (PIX)", "Boleto 30 dias", "Boleto 30/60", "Boleto 30/60/90", "Cartao de Credito"];
+function newParede(num: number, produto?: Produto, tipo: TipoPreco = "lojista"): Parede {
+  return {
+    id: uid(), nome: `Parede ${num}`, largura: "", altura: "",
+    produto_id: produto?.id ?? "", produto_nome: produto?.name ?? "",
+    preco_m2: produto ? getPreco(produto, tipo) : 0,
+    deducoes: [],
+  };
+}
 
 export default function CalculadoraForm() {
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
   function getSupabase() { if (!supabaseRef.current) supabaseRef.current = createClient(); return supabaseRef.current; }
+
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [paredes, setParedes] = useState<Parede[]>([newParede(1)]);
-  const [condicao, setCondicao] = useState(CONDICOES[0]);
+  const [tipoPreco, setTipoPreco] = useState<TipoPreco>("lojista");
 
   useEffect(() => {
-    getSupabase().from("products").select("id, name, preco_m2, largura_min, largura_max, altura_min, altura_max").order("name").then(({ data }) => {
-      if (data) { setProdutos(data); setParedes([newParede(1, data[0])]); }
-    });
+    getSupabase()
+      .from("products")
+      .select("id, name, preco_m2, preco_consumidor_m2, largura_min, largura_max, altura_min, altura_max")
+      .order("name")
+      .then(({ data }) => {
+        if (data) { setProdutos(data); setParedes([newParede(1, data[0], tipoPreco)]); }
+      });
   }, []);
+
+  function handleTipoPreco(novoTipo: TipoPreco) {
+    setTipoPreco(novoTipo);
+    setParedes(ps => ps.map(p => {
+      const prod = produtos.find(pr => pr.id === p.produto_id);
+      if (!prod) return p;
+      return { ...p, preco_m2: getPreco(prod, novoTipo) };
+    }));
+  }
 
   function updateParede(id: string, fields: Partial<Parede>) {
     setParedes(ps => ps.map(p => p.id === id ? { ...p, ...fields } : p));
   }
   function setProdutoParede(paredeId: string, produtoId: string) {
     const prod = produtos.find(p => p.id === produtoId);
-    if (prod) updateParede(paredeId, { produto_id: prod.id, produto_nome: prod.name, preco_m2: prod.preco_m2 });
+    if (prod) updateParede(paredeId, { produto_id: prod.id, produto_nome: prod.name, preco_m2: getPreco(prod, tipoPreco) });
   }
   function addDeducao(paredeId: string, tipo: Deducao["tipo"]) {
     setParedes(ps => ps.map(p => p.id === paredeId ? { ...p, deducoes: [...p.deducoes, { id: uid(), tipo, largura: "", altura: "" }] } : p));
@@ -59,11 +86,27 @@ export default function CalculadoraForm() {
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8">
-      <h1 className="text-2xl font-bold text-gray-900">Calculadora de Orçamento</h1>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <h1 className="text-2xl font-bold text-gray-900">Calculadora de Orçamento</h1>
 
-      {/* Paredes */}
+        <div className="flex items-center bg-gray-100 rounded-lg p-1 gap-1">
+          <button
+            onClick={() => handleTipoPreco("lojista")}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${tipoPreco === "lojista" ? "bg-white text-gray-900 shadow" : "text-gray-500 hover:text-gray-700"}`}
+          >
+            Preco Lojista
+          </button>
+          <button
+            onClick={() => handleTipoPreco("consumidor")}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${tipoPreco === "consumidor" ? "bg-white text-gray-900 shadow" : "text-gray-500 hover:text-gray-700"}`}
+          >
+            Preco Consumidor
+          </button>
+        </div>
+      </div>
+
       <div className="space-y-6">
-        {paredes.map((parede, idx) => (
+        {paredes.map((parede) => (
           <div key={parede.id} className="bg-white rounded-xl shadow p-6 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-800">{parede.nome}</h2>
@@ -90,7 +133,10 @@ export default function CalculadoraForm() {
               <select value={parede.produto_id} onChange={e => setProdutoParede(parede.id, e.target.value)}
                 className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
                 <option value="">Selecione um produto</option>
-                {produtos.map(p => <option key={p.id} value={p.id}>{p.name} — R$ {fmt(p.preco_m2)}/m²</option>)}
+                {produtos.map(p => {
+                  const preco = getPreco(p, tipoPreco);
+                  return <option key={p.id} value={p.id}>{p.name} — R$ {fmt(preco)}/m2</option>;
+                })}
               </select>
             </div>
 
@@ -128,24 +174,20 @@ export default function CalculadoraForm() {
           </div>
         ))}
 
-        <button onClick={() => setParedes(ps => [...ps, newParede(ps.length + 1, produtos[0])])}
+        <button onClick={() => setParedes(ps => [...ps, newParede(ps.length + 1, produtos[0], tipoPreco)])}
           className="w-full border-2 border-dashed border-gray-300 rounded-xl py-3 text-gray-500 hover:border-blue-400 hover:text-blue-500 transition-colors text-sm font-medium">
           + Adicionar parede
         </button>
       </div>
 
-      {/* Condicao de Pagamento */}
-      <div className="bg-white rounded-xl shadow p-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Condicao de Pagamento</label>
-        <select value={condicao} onChange={e => setCondicao(e.target.value)}
-          className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
-          {CONDICOES.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
-      </div>
-
       {totalGeral > 0 && (
         <div className="bg-gray-900 text-white rounded-xl shadow-lg p-6 space-y-4">
-          <h2 className="text-lg font-bold">Resumo do Orcamento</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold">Resumo do Orcamento</h2>
+            <span className={`text-xs px-2 py-1 rounded-full font-medium ${tipoPreco === "consumidor" ? "bg-purple-600" : "bg-blue-600"}`}>
+              {tipoPreco === "consumidor" ? "Preco Consumidor" : "Preco Lojista"}
+            </span>
+          </div>
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-gray-800 rounded-lg p-4 text-center">
               <div className="text-2xl font-bold">{paredes.filter(p => areaLiquida(p) > 0).length}</div>
@@ -160,9 +202,8 @@ export default function CalculadoraForm() {
               <div className="text-xs text-gray-400 mt-1">Valor total</div>
             </div>
           </div>
-          <div className="text-sm text-gray-300">Condicao: <span className="font-medium text-white">{condicao}</span></div>
           <div className="flex gap-3 pt-2">
-            <button onClick={() => { setParedes([newParede(1, produtos[0])]); setCondicao(CONDICOES[0]); }}
+            <button onClick={() => setParedes([newParede(1, produtos[0], tipoPreco)])}
               className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors">Limpar</button>
             <a href="/pedido" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors">Converter em pedido</a>
           </div>
