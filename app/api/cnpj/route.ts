@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const res = await fetch('https://publica.cnpj.ws/cnpj/' + digits, {
+    const res = await fetch('https://receitaws.com.br/v1/cnpj/' + digits, {
       headers: { Accept: 'application/json' },
       next: { revalidate: 3600 },
     });
@@ -19,23 +19,24 @@ export async function GET(request: NextRequest) {
     }
 
     const d = await res.json();
-    const est = d.estabelecimento || {};
+
+    if (d.status === 'ERROR') {
+      return NextResponse.json({ error: d.message || 'CNPJ nao encontrado' }, { status: 404 });
+    }
 
     // Normaliza para o formato esperado pelo formulario
-    const telefone = est.ddd1 && est.telefone1 ? est.ddd1 + est.telefone1 : '';
-
     return NextResponse.json({
-      razao_social: d.razao_social || '',
-      nome_fantasia: est.nome_fantasia || '',
-      logradouro: [est.tipo_logradouro, est.logradouro].filter(Boolean).join(' '),
-      numero: est.numero || '',
-      complemento: est.complemento || '',
-      bairro: est.bairro || '',
-      municipio: est.cidade?.nome || '',
-      uf: est.estado?.sigla || '',
-      cep: est.cep || '',
-      ddd_telefone_1: telefone,
-      situacao_cadastral: est.situacao_cadastral || '',
+      razao_social: d.nome || '',
+      nome_fantasia: d.fantasia || '',
+      logradouro: d.logradouro || '',
+      numero: d.numero || '',
+      complemento: d.complemento || '',
+      bairro: d.bairro || '',
+      municipio: d.municipio || '',
+      uf: d.uf || '',
+      cep: d.cep || '',
+      ddd_telefone_1: d.telefone || '',
+      situacao_cadastral: d.situacao || '',
     });
   } catch {
     return NextResponse.json({ error: 'Erro ao consultar CNPJ' }, { status: 500 });
