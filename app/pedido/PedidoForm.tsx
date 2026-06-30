@@ -9,12 +9,11 @@ interface Produto {
   altura_min: number; altura_max: number;
 }
 interface Deducao { id: string; tipo: "Porta" | "Janela" | "Outro"; largura: string; altura: string; }
-interface Parede { id: string; nome: string; largura: string; altura: string; produto_id: string; produto_nome: string; preco_m2: number; deducoes: Deducao[]; }
+interface Parede { id: string; nome: string; largura: string; altura: string; produto_id: string; produto_nome: string; preco_m2: number; deducoes: Deducao[]; layout_url?: string; layoutUploading?: boolean; }
 interface Props { userId: string; vendedorNome?: string; }
 
 function uid() { return Math.random().toString(36).slice(2, 9); }
 function n(v: string) { return parseFloat(v) || 0; }
-// cm -> m2: divide por 10000
 function areaBruta(p: Parede) { return (n(p.largura) * n(p.altura)) / 10000; }
 function areaDeducoes(p: Parede) { return p.deducoes.reduce((acc, d) => acc + (n(d.largura) * n(d.altura)) / 10000, 0); }
 function areaLiquida(p: Parede) { return Math.max(0, areaBruta(p) - areaDeducoes(p)); }
@@ -28,7 +27,6 @@ export default function PedidoForm({ userId }: Props) {
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
   function getSupabase() { if (!supabaseRef.current) supabaseRef.current = createClient(); return supabaseRef.current; }
 
-  // Dados do cliente
   const [cnpj, setCnpj] = useState("");
   const [razaoSocial, setRazaoSocial] = useState("");
   const [endereco, setEndereco] = useState("");
@@ -38,13 +36,11 @@ export default function PedidoForm({ userId }: Props) {
   const [cnpjLoading, setCnpjLoading] = useState(false);
   const [cnpjError, setCnpjError] = useState("");
 
-  // Pedido
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [paredes, setParedes] = useState<Parede[]>([]);
   const [transportadora, setTransportadora] = useState("");
   const [observacoes, setObservacoes] = useState("");
 
-  // Estado geral
   const [loading, setLoading] = useState(false);
   const [sucesso, setSucesso] = useState(false);
   const [numeroPedido, setNumeroPedido] = useState("");
@@ -76,7 +72,7 @@ export default function PedidoForm({ userId }: Props) {
     if (digits.length !== 14) return;
     setCnpjLoading(true); setCnpjError("");
     try {
-      const res = await fetch("/api/cnpj?cnpj=" + digits);
+      const res = await fetch("/api/cnpj" + "?cnpj=" + digits);
       if (!res.ok) throw new Error();
       const d = await res.json();
       setRazaoSocial(d.razao_social || "");
@@ -98,6 +94,20 @@ export default function PedidoForm({ userId }: Props) {
   function updateDeducao(paredeId: string, deducaoId: string, patch: Partial<Deducao>) { setParedes(prev => prev.map(p => p.id === paredeId ? { ...p, deducoes: p.deducoes.map(d => d.id === deducaoId ? { ...d, ...patch } : d) } : p)); }
   function removeDeducao(paredeId: string, deducaoId: string) { setParedes(prev => prev.map(p => p.id === paredeId ? { ...p, deducoes: p.deducoes.filter(d => d.id !== deducaoId) } : p)); }
 
+  async function uploadLayout(paredeId: string, file: File) {
+    updateParede(paredeId, { layoutUploading: true });
+    try {
+      const ext = file.name.split(".").pop();
+      const path = userId + "/" + paredeId + "-" + Date.now() + "." + ext;
+      const { error } = await getSupabase().storage.from("layouts").upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data } = getSupabase().storage.from("layouts").getPublicUrl(path);
+      updateParede(paredeId, { layout_url: data.publicUrl, layoutUploading: false });
+    } catch {
+      updateParede(paredeId, { layoutUploading: false });
+    }
+  }
+
   const totalGeral = paredes.reduce((acc, p) => acc + subtotal(p), 0);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -116,12 +126,12 @@ export default function PedidoForm({ userId }: Props) {
       deducoes: p.deducoes.map(d => ({ tipo: d.tipo, largura_cm: n(d.largura), altura_cm: n(d.altura), area: parseFloat(((n(d.largura)*n(d.altura))/10000).toFixed(4)) })),
       area_deducoes: parseFloat(areaDeducoes(p).toFixed(4)),
       area_liquida: parseFloat(areaLiquida(p).toFixed(4)),
-      subtotal: parseFloat(subtotal(p).toFixed(2))
+      subtotal: parseFloat(subtotal(p).toFixed(2)),
+      layout_url: p.layout_url || null,
     }));
 
     setLoading(true);
 
-    // 1. Upsert cliente (cria ou atualiza pelo CNPJ)
     const { data: clienteData, error: clienteError } = await getSupabase()
       .from("clientes")
       .upsert(
@@ -133,7 +143,6 @@ export default function PedidoForm({ userId }: Props) {
 
     if (clienteError) { setErro("Erro ao registrar cliente: " + clienteError.message); setLoading(false); return; }
 
-    // 2. Inserir pedido com cliente_id (numero gerado automaticamente pelo trigger)
     const { data: pedidoData, error: pedidoError } = await getSupabase()
       .from("pedidos")
       .insert({
@@ -164,7 +173,7 @@ export default function PedidoForm({ userId }: Props) {
 
   if (sucesso) return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
-      <div className="text-5xl mb-4">â</div>
+      <div className="text-5xl mb-4">✓</div>
       <h2 className="text-xl font-semibold text-gray-900 mb-2">Pedido registrado!</h2>
       {numeroPedido && (
         <p className="text-3xl font-bold text-gray-900 my-4 tracking-widest">{numeroPedido}</p>
@@ -182,7 +191,6 @@ export default function PedidoForm({ userId }: Props) {
       <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <h2 className="text-base font-semibold text-gray-800 mb-4">1. Dados do cliente</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* CNPJ */}
           <div>
             <label className="block text-sm text-gray-600 mb-1">CNPJ</label>
             <div className="flex gap-2">
@@ -198,36 +206,26 @@ export default function PedidoForm({ userId }: Props) {
             </div>
             {cnpjError && <p className="text-xs text-red-500 mt-1">{cnpjError}</p>}
           </div>
-
-          {/* Razao Social */}
           <div>
             <label className="block text-sm text-gray-600 mb-1">Razao Social</label>
             <input type="text" value={razaoSocial} onChange={e => setRazaoSocial(e.target.value)}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" required />
           </div>
-
-          {/* Endereco */}
           <div className="sm:col-span-2">
             <label className="block text-sm text-gray-600 mb-1">Endereco</label>
             <input type="text" value={endereco} onChange={e => setEndereco(e.target.value)}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
           </div>
-
-          {/* Cidade */}
           <div>
             <label className="block text-sm text-gray-600 mb-1">Cidade</label>
             <input type="text" value={cidade} onChange={e => setCidade(e.target.value)}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
           </div>
-
-          {/* Estado */}
           <div>
             <label className="block text-sm text-gray-600 mb-1">Estado</label>
             <input type="text" value={estado} onChange={e => setEstado(e.target.value)} maxLength={2}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-gray-900" />
           </div>
-
-          {/* Telefone */}
           <div>
             <label className="block text-sm text-gray-600 mb-1">Telefone</label>
             <input type="text" value={telefone}
@@ -294,6 +292,24 @@ export default function PedidoForm({ userId }: Props) {
                       <span className="ml-auto text-sm font-semibold text-gray-800">R$ {fmt(sub)}</span>
                     </div>
                   )}
+                  {/* Layout do ambiente */}
+                  <div className="flex items-center gap-3 pt-1 border-t border-gray-100">
+                    <label className={`cursor-pointer flex items-center gap-1.5 text-xs border border-dashed rounded-lg px-3 py-1.5 transition-colors ${parede.layoutUploading ? "border-gray-200 text-gray-300 cursor-not-allowed" : "border-blue-300 text-blue-500 hover:bg-blue-50"}`}>
+                      <input type="file" accept="image/*,.pdf" className="hidden" disabled={!!parede.layoutUploading}
+                        onChange={e => { const f = e.target.files?.[0]; if (f) uploadLayout(parede.id, f); e.target.value = ""; }} />
+                      {parede.layoutUploading ? "Enviando..." : parede.layout_url ? "Trocar layout" : "+ Anexar layout"}
+                    </label>
+                    {parede.layout_url && (
+                      <a href={parede.layout_url} target="_blank" rel="noopener noreferrer"
+                        className="text-xs text-blue-500 hover:underline truncate max-w-xs">
+                        Ver layout
+                      </a>
+                    )}
+                    {parede.layout_url && (
+                      <button type="button" onClick={() => updateParede(parede.id, { layout_url: undefined })}
+                        className="text-xs text-gray-400 hover:text-red-400 transition-colors">remover</button>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -303,7 +319,7 @@ export default function PedidoForm({ userId }: Props) {
         {paredes.length > 0 && totalGeral > 0 && <div className="mt-4 flex justify-between items-center bg-gray-900 text-white rounded-xl px-5 py-3"><span className="text-sm font-medium">Total geral</span><span className="text-lg font-bold">R$ {fmt(totalGeral)}</span></div>}
       </section>
 
-      {/* 3. Transportadora e observacoes */}
+      {/* 3. Entrega e observacoes */}
       <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <h2 className="text-base font-semibold text-gray-800 mb-4">3. Entrega e observacoes</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
