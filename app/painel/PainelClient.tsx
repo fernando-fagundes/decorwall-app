@@ -81,7 +81,8 @@ export default function PainelClient({ pedidos, isGestor, nomeUsuario }: Props) 
         </div>
       ) : (
         <div className="space-y-3">
-          {pedidosFiltrados.map(pedido => (
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          {pedidosFiltrados.map((pedido: any) => (
             <PedidoCard key={pedido.id} pedido={pedido} isGestor={isGestor} />
           ))}
         </div>
