@@ -53,10 +53,10 @@ export default function PainelClient({ pedidos, isGestor, nomeUsuario }: Props) 
                 ativo ? card.corAtivo + " border-2" : "border-gray-100 hover:border-gray-300"
               }`}
             >
-              <p className={`text-xs uppercase tracking-wide mb-1 font-medium ${ativo ? "opacity-80" : "text-gray-400"}`}>
+              <p className={`text-xs uppercase tracking-wide mb-1 font-medium ${ativo ? "text-white opacity-80" : "text-gray-400"}`}>
                 {card.label}
               </p>
-              <p className={`text-2xl font-bold ${ativo ? "" : card.cor}`}>
+              <p className={`text-2xl font-bold ${ativo ? "text-white" : card.cor}`}>
                 {card.valor}
               </p>
             </button>
