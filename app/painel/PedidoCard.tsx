@@ -124,34 +124,49 @@ export default function PedidoCard({ pedido, isGestor }: { pedido: Pedido; isGes
 
           {isGestor && (
             <div className="flex items-center gap-2 pt-2 border-t border-gray-200">
-              {pedido.status !== 'aprovado' && (
+              {pedido.status === 'recusado' ? (
+                /* Pedido recusado: apenas botão excluir */
                 <button
-                  onClick={() => handle('aprovar', () => atualizarStatus(pedido.id, 'aprovado'))}
+                  onClick={() => {
+                    if (!confirm('Excluir este pedido permanentemente?')) return
+                    handle('excluir', () => excluirPedido(pedido.id))
+                  }}
                   disabled={isPending}
-                  className="text-sm bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors font-medium"
+                  className="text-sm bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 disabled:opacity-50 transition-colors font-medium"
                 >
-                  {loadingAction === 'aprovar' ? 'Aprovando...' : 'Aprovar'}
+                  {loadingAction === 'excluir' ? 'Excluindo...' : 'Excluir pedido'}
                 </button>
+              ) : (
+                /* Pendente ou aprovado: aprovar, recusar, excluir */
+                <>
+                  {pedido.status !== 'aprovado' && (
+                    <button
+                      onClick={() => handle('aprovar', () => atualizarStatus(pedido.id, 'aprovado'))}
+                      disabled={isPending}
+                      className="text-sm bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors font-medium"
+                    >
+                      {loadingAction === 'aprovar' ? 'Aprovando...' : 'Aprovar'}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handle('recusar', () => atualizarStatus(pedido.id, 'recusado'))}
+                    disabled={isPending}
+                    className="text-sm bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 disabled:opacity-50 transition-colors font-medium"
+                  >
+                    {loadingAction === 'recusar' ? 'Recusando...' : 'Recusar'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!confirm('Excluir este pedido permanentemente?')) return
+                      handle('excluir', () => excluirPedido(pedido.id))
+                    }}
+                    disabled={isPending}
+                    className="text-sm border border-red-200 text-red-500 px-4 py-2 rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors ml-auto"
+                  >
+                    {loadingAction === 'excluir' ? 'Excluindo...' : 'Excluir'}
+                  </button>
+                </>
               )}
-              {pedido.status !== 'recusado' && (
-                <button
-                  onClick={() => handle('recusar', () => atualizarStatus(pedido.id, 'recusado'))}
-                  disabled={isPending}
-                  className="text-sm bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 disabled:opacity-50 transition-colors font-medium"
-                >
-                  {loadingAction === 'recusar' ? 'Recusando...' : 'Recusar'}
-                </button>
-              )}
-              <button
-                onClick={() => {
-                  if (!confirm('Excluir este pedido permanentemente?')) return
-                  handle('excluir', () => excluirPedido(pedido.id))
-                }}
-                disabled={isPending}
-                className="text-sm border border-red-200 text-red-500 px-4 py-2 rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors ml-auto"
-              >
-                {loadingAction === 'excluir' ? 'Excluindo...' : 'Excluir'}
-              </button>
             </div>
           )}
         </div>
