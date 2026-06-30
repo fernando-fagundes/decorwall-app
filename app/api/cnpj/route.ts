@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const res = await fetch('https://brasilapi.com.br/api/cnpj/v1/' + digits, {
+    const res = await fetch('https://publica.cnpj.ws/cnpj/' + digits, {
       headers: { Accept: 'application/json' },
       next: { revalidate: 3600 },
     });
@@ -18,8 +18,25 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'CNPJ nao encontrado' }, { status: res.status });
     }
 
-    const data = await res.json();
-    return NextResponse.json(data);
+    const d = await res.json();
+    const est = d.estabelecimento || {};
+
+    // Normaliza para o formato esperado pelo formulario
+    const telefone = est.ddd1 && est.telefone1 ? est.ddd1 + est.telefone1 : '';
+
+    return NextResponse.json({
+      razao_social: d.razao_social || '',
+      nome_fantasia: est.nome_fantasia || '',
+      logradouro: [est.tipo_logradouro, est.logradouro].filter(Boolean).join(' '),
+      numero: est.numero || '',
+      complemento: est.complemento || '',
+      bairro: est.bairro || '',
+      municipio: est.cidade?.nome || '',
+      uf: est.estado?.sigla || '',
+      cep: est.cep || '',
+      ddd_telefone_1: telefone,
+      situacao_cadastral: est.situacao_cadastral || '',
+    });
   } catch {
     return NextResponse.json({ error: 'Erro ao consultar CNPJ' }, { status: 500 });
   }
