@@ -2,26 +2,24 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
-const heroImages = [
-  "https://s3.amazonaws.com/appforest_uf/f1702500000000x000000000000000000/safari-bg.jpg",
-];
+const CDN = "https://863c7441b944411b744b3e4d037f100f.cdn.bubble.io";
 
 const categoryShowcase = [
   {
     name: "Floresta",
-    imageUrl: "https://fotomural.com.br/version-test/files/style_photo/f_auto,q_auto/1729019245893x611893756838977500/WhatsApp%20Image%202024-10-15%20at%2020.04.57.jpeg",
+    imageUrl: CDN + "/f1740593171859x250298538386911400/Floresta%20aquarela%20pinheiro%20arvore%202329891549%20baixa.jpg",
   },
   {
     name: "Safari",
-    imageUrl: "https://fotomural.com.br/version-test/files/style_photo/f_auto,q_auto/1729019245893x611893756838977500/WhatsApp%20Image%202024-10-15%20at%2020.04.57.jpeg",
+    imageUrl: CDN + "/f1615312424002x222058692035429500/fotomural%20infantil.png",
   },
   {
     name: "Estampas Personalizadas",
-    imageUrl: "https://fotomural.com.br/version-test/files/style_photo/f_auto,q_auto/1729019245893x611893756838977500/WhatsApp%20Image%202024-10-15%20at%2020.04.57.jpeg",
+    imageUrl: CDN + "/f1618261071507x156400461429389020/shutterstock_1060649744%20triangulos%20rose%20ambiente.jpg",
   },
   {
-    name: "Painel Fotogr\u00e1fico",
-    imageUrl: "https://fotomural.com.br/version-test/files/style_photo/f_auto,q_auto/1729537032785x476673555682803700/WhatsApp%20Image%202024-10-21%20at%2015.25.04.jpeg",
+    name: "Painel Fotográfico",
+    imageUrl: CDN + "/f1615337378985x727677735628804500/Painel%20fotografico%20baixo.jpg",
   },
 ];
 
@@ -29,29 +27,41 @@ const productTypes = [
   {
     name: "Adesivo Azulejo",
     description: "Confira a categoria completa",
-    imageUrl: "https://fotomural.com.br/version-test/files/style_photo/f_auto,q_auto/1730923479546x841563553548984300/Captura%20de%20tela%202024-11-06%20141745.png",
+    imageUrl: CDN + "/f1619870157064x905326007794203100/Azulejo-02.jpg",
   },
   {
     name: "Adesivo Porta",
     description: "Confira a categoria completa",
-    imageUrl: "https://fotomural.com.br/version-test/files/style_photo/f_auto,q_auto/1730923479546x841563553548984300/Captura%20de%20tela%202024-11-06%20141745.png",
+    imageUrl: CDN + "/f1619874710286x146820826799292100/Porta%20ambientes-0baixo.jpg",
   },
   {
     name: "Adesivo Lousa",
     description: "Confira a categoria completa",
-    imageUrl: "https://fotomural.com.br/version-test/files/style_photo/f_auto,q_auto/1730923479546x841563553548984300/Captura%20de%20tela%202024-11-06%20141745.png",
+    imageUrl: CDN + "/f1619870330212x152846077615480100/Parede%20com%20adesivo%20lousa.jpg",
   },
   {
     name: "Adesivo para Vidro",
     description: "Confira a categoria completa",
-    imageUrl: "https://fotomural.com.br/version-test/files/style_photo/f_auto,q_auto/1730923479546x841563553548984300/Captura%20de%20tela%202024-11-06%20141745.png",
+    imageUrl: CDN + "/f1619870802850x157189763120703330/Imagem%20jateado1.jpg",
   },
 ];
 
 const destaques = [
-  { name: "Xadrez", description: "Confira a categoria completa", imageUrl: "https://fotomural.com.br/version-test/files/style_photo/f_auto,q_auto/1729019245893x611893756838977500/WhatsApp%20Image%202024-10-15%20at%2020.04.57.jpeg" },
-  { name: "Cortina de Flores", description: "Confira a categoria completa", imageUrl: "https://fotomural.com.br/version-test/files/style_photo/f_auto,q_auto/1729019245893x611893756838977500/WhatsApp%20Image%202024-10-15%20at%2020.04.57.jpeg" },
-  { name: "Tropical", description: "Confira a categoria completa", imageUrl: "https://fotomural.com.br/version-test/files/style_photo/f_auto,q_auto/1729537032785x476673555682803700/WhatsApp%20Image%202024-10-21%20at%2015.25.04.jpeg" },
+  {
+    name: "Xadrez",
+    description: "Confira a categoria completa",
+    imageUrl: CDN + "/f1738156318724x272745475905038500/xadrez%20rosa.jpg",
+  },
+  {
+    name: "Cortina de Flores",
+    description: "Confira a categoria completa",
+    imageUrl: CDN + "/f1738156647225x863265231025634800/_%20facepost%20-%202023-05-18T155400.700.png",
+  },
+  {
+    name: "Tropical",
+    description: "Confira a categoria completa",
+    imageUrl: CDN + "/f1738156717929x813480626046225800/1000_F_652998153_ncJ6gJIVHfK1gH9JdOLBKdTwWHOirCkD%20mockup.jpg",
+  },
 ];
 
 export default function HomePage() {
@@ -63,7 +73,7 @@ export default function HomePage() {
       <section className="relative min-h-[520px] flex items-center bg-gray-100 overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center opacity-60"
-          style={{ backgroundImage: `url('https://fotomural.com.br/version-test/files/style_photo/f_auto,q_auto/1729019245893x611893756838977500/WhatsApp%20Image%202024-10-15%20at%2020.04.57.jpeg')` }}
+          style={{ backgroundImage: `url('${CDN}/f1737982784465x330243915918055940/WhatsApp%20Image%202025-01-16%20at%2015.46.47.jpeg')` }}
         />
         <div className="relative z-10 max-w-7xl mx-auto px-8 py-20">
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 max-w-md">
@@ -71,7 +81,7 @@ export default function HomePage() {
               Aumente o lucro e mix de produtos na sua loja.
             </h1>
             <p className="text-gray-600 mb-6">
-              Revenda produtos de alta qualidade da maior empresa de pap\u00e9is de parede e
+              Revenda produtos de alta qualidade da maior empresa de papéis de parede e
               revestimentos personalizados do Brasil
             </p>
             <Link
@@ -88,7 +98,7 @@ export default function HomePage() {
       <section className="py-10 px-4 flex items-center justify-center gap-4 bg-white">
         <p className="text-xl font-semibold text-gray-800 text-center">
           Quando precisar de uma ajudinha,<br />
-          estaremos sempre \u00e0 disposi\u00e7\u00e3o!
+          estaremos sempre à disposição!
         </p>
         <a
           href="https://wa.me/555132312340"
@@ -158,7 +168,7 @@ export default function HomePage() {
                   href="/catalogo"
                   className="block text-center bg-gray-900 text-white rounded-lg py-2 text-sm font-medium hover:bg-gray-700 transition-colors"
                 >
-                  Veja o Cat\u00e1logo
+                  Veja o Catálogo
                 </Link>
               </div>
             </div>
