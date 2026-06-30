@@ -23,7 +23,6 @@ function fmt(v: number) { return v.toLocaleString("pt-BR", { minimumFractionDigi
 function newParede(num: number, produto?: Produto): Parede {
   return { id: uid(), nome: `Parede ${num}`, largura: "", altura: "", produto_id: produto?.id ?? "", produto_nome: produto?.name ?? "", preco_m2: produto?.preco_m2 ?? 0, deducoes: [] };
 }
-const CONDICOES = ["A vista (PIX)", "Boleto 30 dias", "Boleto 30/60", "Boleto 30/60/90", "Cartao de Credito"];
 
 export default function PedidoForm({ userId }: Props) {
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
@@ -42,7 +41,7 @@ export default function PedidoForm({ userId }: Props) {
   // Pedido
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [paredes, setParedes] = useState<Parede[]>([]);
-  const [condicao, setCondicao] = useState(CONDICOES[0]);
+  const [transportadora, setTransportadora] = useState("");
   const [observacoes, setObservacoes] = useState("");
 
   // Estado geral
@@ -145,7 +144,7 @@ export default function PedidoForm({ userId }: Props) {
         endereco, cidade, estado,
         itens,
         valor_total: parseFloat(totalGeral.toFixed(2)),
-        condicao_pagamento: condicao,
+        transportadora,
         observacoes,
       })
       .select("numero")
@@ -160,7 +159,7 @@ export default function PedidoForm({ userId }: Props) {
     setSucesso(false); setNumeroPedido("");
     setCnpj(""); setRazaoSocial(""); setEndereco(""); setCidade(""); setEstado(""); setTelefone("");
     setParedes([newParede(1, produtos[0])]);
-    setCondicao(CONDICOES[0]); setObservacoes("");
+    setObservacoes("");
   }
 
   if (sucesso) return (
@@ -304,15 +303,15 @@ export default function PedidoForm({ userId }: Props) {
         {paredes.length > 0 && totalGeral > 0 && <div className="mt-4 flex justify-between items-center bg-gray-900 text-white rounded-xl px-5 py-3"><span className="text-sm font-medium">Total geral</span><span className="text-lg font-bold">R$ {fmt(totalGeral)}</span></div>}
       </section>
 
-      {/* 3. Pagamento e observacoes */}
+      {/* 3. Transportadora e observacoes */}
       <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-base font-semibold text-gray-800 mb-4">3. Pagamento e observacoes</h2>
+        <h2 className="text-base font-semibold text-gray-800 mb-4">3. Entrega e observacoes</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">Condicao de pagamento</label>
-            <select value={condicao} onChange={e => setCondicao(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" required>
-              {CONDICOES.map(c => <option key={c}>{c}</option>)}
-            </select>
+          <div className="sm:col-span-2">
+            <label className="block text-sm text-gray-600 mb-1">Transportadora</label>
+            <input type="text" value={transportadora} onChange={e => setTransportadora(e.target.value)}
+              placeholder="Nome da transportadora ou retirada na loja..."
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900" />
           </div>
           <div className="sm:col-span-2">
             <label className="block text-sm text-gray-600 mb-1">Observacoes</label>
