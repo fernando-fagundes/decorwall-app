@@ -22,3 +22,4 @@ export async function excluirPedido(pedidoId: string) {
   if (error) throw new Error(error.message)
   revalidatePath('/painel')
 }
+// deploy trigger
