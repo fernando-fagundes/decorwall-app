@@ -18,41 +18,44 @@ export default async function PainelPage() {
 
   if (!profile?.aprovado) redirect("/aguardando-aprovacao");
 
-  const isGestor = ["admin", "vendedor"].includes(profile?.role || "");
-
-  const baseQuery = supabase
+  // Busca TODOS os pedidos de todos os agentes
+  const { data: pedidos } = await supabase
     .from("pedidos")
-    .select("*")
+    .select("*, profiles(nome, email)")
     .order("created_at", { ascending: false });
-
-  const { data: pedidos } = isGestor
-    ? await baseQuery
-    : await baseQuery.eq("user_id", user.id);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
         <span className="text-xl font-light tracking-tight">
-          <span className="text-gray-800">foto</span>
-          <span className="text-red-700">mural</span>
+          <span className="text-gray-800">decor</span>
+          <span className="text-red-700">wall</span>
           <span className="text-gray-400 text-sm font-normal ml-2">painel</span>
         </span>
         <div className="flex items-center gap-4">
-          <a href="/pedido" className="text-sm text-gray-500 hover:text-gray-800 border border-gray-200 rounded-lg px-3 py-1.5 transition-colors">
-            + Novo pedido
-          </a>
           <span className="text-sm text-gray-600">{profile?.nome || profile?.email}</span>
           <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-medium uppercase">
             {profile?.role}
           </span>
+          <a href="/api/auth/signout" className="text-xs text-gray-400 hover:text-gray-700 border border-gray-200 hover:border-gray-400 rounded-lg px-3 py-1.5 transition-colors">
+            Sair
+          </a>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-10">
+      <div className="bg-white border-b border-gray-100 px-6">
+        <div className="flex gap-6 max-w-6xl mx-auto">
+          <a href="/painel" className="text-sm font-medium text-gray-900 border-b-2 border-gray-900 py-3">Pedidos</a>
+          <a href="/pedido" className="text-sm text-gray-400 hover:text-gray-700 py-3 transition-colors">Novo pedido</a>
+          <a href="/catalogo" className="text-sm text-gray-400 hover:text-gray-700 py-3 transition-colors">Catálogo</a>
+        </div>
+      </div>
+
+      <main className="max-w-6xl mx-auto px-6 py-8">
         <PainelClient
-          pedidos={pedidos || []}
-          isGestor={isGestor}
-          nomeUsuario={profile?.nome || profile?.email || "usuario"}
+          pedidos={pedidos ?? []}
+          isGestor={true}
+          nomeUsuario={profile?.nome || profile?.email || ""}
         />
       </main>
     </div>
