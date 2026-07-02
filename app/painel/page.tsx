@@ -48,6 +48,7 @@ export default async function PainelPage() {
           <a href="/painel" className="text-sm font-medium text-gray-900 border-b-2 border-gray-900 py-3">Pedidos</a>
           <a href="/pedido" className="text-sm text-gray-400 hover:text-gray-700 py-3 transition-colors">Novo pedido</a>
           <a href="/catalogo" className="text-sm text-gray-400 hover:text-gray-700 py-3 transition-colors">Catálogo</a>
+            <a href="/calculadora" className="text-sm text-gray-400 hover:text-gray-700 py-3 transition-colors">Calculadora</a>
         </div>
       </div>
 
