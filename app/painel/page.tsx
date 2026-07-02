@@ -21,7 +21,7 @@ export default async function PainelPage() {
   // Busca TODOS os pedidos de todos os agentes
   const { data: pedidos } = await supabase
     .from("pedidos")
-    .select("*, profiles(nome, email)")
+    .select("*")
     .order("created_at", { ascending: false });
 
   return (
