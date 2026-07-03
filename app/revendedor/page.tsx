@@ -84,7 +84,7 @@ export default function RevendedorPage() {
               e venha fazer parte da <strong>família Decorwall</strong>
             </p>
             <a
-              href="https://wa.me/555132312340"
+              href="https://wa.me/555193441137"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold px-8 py-4 rounded-xl transition-colors text-lg"
@@ -138,7 +138,7 @@ export default function RevendedorPage() {
             </div>
             <div className="text-center mt-10">
               <a
-                href="https://wa.me/555132312340"
+                href="https://wa.me/555193441137"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold px-8 py-3 rounded-xl transition-colors"
@@ -187,7 +187,7 @@ export default function RevendedorPage() {
           <h2 className="text-3xl font-bold mb-3">Já estamos em 15 estados</h2>
           <p className="text-gray-300 mb-8 text-lg">Mais de 500 revendedores em todo o Brasil</p>
           <a
-            href="https://wa.me/555132312340"
+            href="https://wa.me/555193441137"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold px-8 py-4 rounded-xl transition-colors text-lg"
@@ -227,7 +227,7 @@ export default function RevendedorPage() {
             <h2 className="text-2xl font-bold text-gray-900 mb-3">Ainda tem dúvidas?</h2>
             <p className="text-gray-500 mb-8">Para um contato de nossos vendedores, chame no WhatsApp.</p>
             <a
-              href="https://wa.me/555132312340"
+              href="https://wa.me/555193441137"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold px-10 py-4 rounded-xl transition-colors text-lg w-full justify-center"
@@ -250,7 +250,7 @@ export default function RevendedorPage() {
 
       {/* WhatsApp flutuante */}
       <a
-        href="https://wa.me/555132312340"
+        href="https://wa.me/555193441137"
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-6 right-6 w-14 h-14 z-50"
