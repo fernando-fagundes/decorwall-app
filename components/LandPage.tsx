@@ -1,5 +1,13 @@
+"use client";
+
+declare global {
+  interface Window {
+    fbq: (...args: unknown[]) => void;
+  }
+}
+
 const heroImage =
-  "https://fotomural.com.br/version-test/files/style_photo/f_auto,q_auto/1729019245893x6118937568389775000/WhatsApp%20Image%202024-10-15%20at%2020.04.57.jpeg";
+  "https://fotomural.com.br/version-test/files/style_photo/f_auto,q_auto/172901924589 3x611893756838977500 0/WhatsApp%20Image%202024-10-15%20at%2020.04.57.jpeg";
 
 const vantagens = [
   {
@@ -31,6 +39,12 @@ const vantagens = [
 interface LandPageProps {
   vendedor: string;
   whatsapp: string;
+}
+
+function trackLead() {
+  if (typeof window !== "undefined" && window.fbq) {
+    window.fbq("track", "Lead");
+  }
 }
 
 export default function LandPage({ vendedor, whatsapp }: LandPageProps) {
@@ -70,9 +84,10 @@ export default function LandPage({ vendedor, whatsapp }: LandPageProps) {
             href={waMsg}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={trackLead}
             className="inline-block bg-green-500 text-white px-8 py-3 rounded font-semibold hover:bg-green-600 transition-colors mb-10 text-base"
           >
-            Chame no Whatsapp →
+            Chame no Whatsapp ➲
           </a>
           <p className="text-gray-400 text-xl mt-4">#sejadecorwall</p>
         </div>
@@ -118,9 +133,10 @@ export default function LandPage({ vendedor, whatsapp }: LandPageProps) {
             href={waMsg}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={trackLead}
             className="inline-block bg-green-500 text-white px-10 py-3 rounded font-semibold hover:bg-green-600 transition-colors"
           >
-            Atendimento para revendedor →
+            Atendimento para revendedor ➲
           </a>
         </div>
       </section>
@@ -174,6 +190,7 @@ export default function LandPage({ vendedor, whatsapp }: LandPageProps) {
         href={waLink}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={trackLead}
         className="fixed bottom-6 left-6 w-14 h-14 z-50"
       >
         <img
