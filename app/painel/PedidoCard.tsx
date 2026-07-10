@@ -44,10 +44,15 @@ const STATUS_COLOR: Record<string, string> = {
   recusado: 'bg-red-100 text-red-800',
 }
 
+function isPdf(url: string) {
+  return /\.pdf$/i.test(url)
+}
+
 export default function PedidoCard({ pedido, isGestor }: { pedido: Pedido; isGestor: boolean }) {
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [loadingAction, setLoadingAction] = useState<string | null>(null)
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
 
   function handle(action: string, fn: () => Promise<void>) {
     setLoadingAction(action)
@@ -60,117 +65,183 @@ export default function PedidoCard({ pedido, isGestor }: { pedido: Pedido; isGes
   const data = new Date(pedido.created_at).toLocaleDateString('pt-BR')
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="flex items-center gap-3 px-5 py-4">
-        <span className={"text-xs font-semibold px-2.5 py-1 rounded-full uppercase " + (STATUS_COLOR[pedido.status] || 'bg-gray-100 text-gray-600')}>
-          {STATUS_LABEL[pedido.status] || pedido.status}
-        </span>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-800 truncate">{pedido.razao_social || '—'}</p>
-          <p className="text-xs text-gray-400">{cnpjFmt} · {data}</p>
-        </div>
-        <div className="text-right shrink-0">
-          <p className="text-sm font-bold text-gray-800">R$ {fmt(pedido.valor_total || 0)}</p>
-          <p className="text-xs text-gray-400">{pedido.itens?.length || 0} parede(s)</p>
-        </div>
-        <button onClick={() => setOpen(o => !o)} className="ml-2 text-gray-400 hover:text-gray-600 w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 transition-colors text-xs">
-          {open ? '▲' : '▼'}
-        </button>
-      </div>
-
-      {open && (
-        <div className="border-t border-gray-100 bg-gray-50 px-5 py-4 space-y-4">
-          {(pedido.endereco || pedido.cidade) && (
-            <div>
-              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Endereço</p>
-              <p className="text-sm text-gray-700">{[pedido.endereco, pedido.cidade, pedido.estado].filter(Boolean).join(', ')}</p>
-            </div>
-          )}
-
-          <div>
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Paredes</p>
-            <div className="space-y-2">
-              {pedido.itens?.map((item, i) => (
-                <div key={i} className="flex items-center gap-3 bg-white rounded-lg border border-gray-200 px-4 py-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-800">{item.nome}</p>
-                    <p className="text-xs text-gray-500">{item.produto_nome} · {item.largura_cm}x{item.altura_cm} cm · {fmt(item.area_liquida)} m2</p>
-                  </div>
-                  <p className="text-sm font-semibold text-gray-800 shrink-0">R$ {fmt(item.subtotal)}</p>
-                  {item.layout_url && (
-                    <a href={item.layout_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline shrink-0">Layout</a>
-                  )}
-                </div>
-              ))}
+    <>
+      {/* Lightbox */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <div className="relative max-w-4xl max-h-full" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => setLightboxUrl(null)}
+              className="absolute -top-3 -right-3 bg-white rounded-full w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900 shadow-lg text-lg font-bold z-10"
+            >
+              ×
+            </button>
+            <img
+              src={lightboxUrl}
+              alt="Layout"
+              className="max-w-full max-h-[85vh] rounded-xl object-contain shadow-2xl"
+            />
+            <div className="mt-2 text-center">
+              <a
+                href={lightboxUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-white/70 hover:text-white underline"
+                onClick={e => e.stopPropagation()}
+              >
+                Abrir em nova aba
+              </a>
             </div>
           </div>
+        </div>
+      )}
 
-          {(pedido.transportadora || pedido.observacoes) && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-              {pedido.transportadora && (
-                <div>
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Transportadora</p>
-                  <p className="text-gray-700">{pedido.transportadora}</p>
-                </div>
-              )}
-              {pedido.observacoes && (
-                <div>
-                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Observações</p>
-                  <p className="text-gray-700">{pedido.observacoes}</p>
-                </div>
-              )}
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="flex items-center gap-3 px-5 py-4">
+          <span className={"text-xs font-semibold px-2.5 py-1 rounded-full uppercase " + (STATUS_COLOR[pedido.status] || 'bg-gray-100 text-gray-600')}>
+            {STATUS_LABEL[pedido.status] || pedido.status}
+          </span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-800 truncate">{pedido.razao_social || '—'}</p>
+            <p className="text-xs text-gray-400">{cnpjFmt} · {data}</p>
+          </div>
+          <div className="text-right shrink-0">
+            <p className="text-sm font-bold text-gray-800">R$ {fmt(pedido.valor_total || 0)}</p>
+            <p className="text-xs text-gray-400">{pedido.itens?.length || 0} parede(s)</p>
+          </div>
+          <button onClick={() => setOpen(o => !o)} className="ml-2 text-gray-400 hover:text-gray-600 w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 transition-colors text-xs">
+            {open ? '▲' : '▼'}
+          </button>
+        </div>
+
+        {open && (
+          <div className="border-t border-gray-100 bg-gray-50 px-5 py-4 space-y-4">
+            {(pedido.endereco || pedido.cidade) && (
+              <div>
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Endereço</p>
+                <p className="text-sm text-gray-700">{[pedido.endereco, pedido.cidade, pedido.estado].filter(Boolean).join(', ')}</p>
+              </div>
+            )}
+
+            <div>
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Paredes</p>
+              <div className="space-y-3">
+                {pedido.itens?.map((item, i) => (
+                  <div key={i} className="bg-white rounded-lg border border-gray-200 px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800">{item.nome}</p>
+                        <p className="text-xs text-gray-500">{item.produto_nome} · {item.largura_cm}x{item.altura_cm} cm · {fmt(item.area_liquida)} m2</p>
+                      </div>
+                      <p className="text-sm font-semibold text-gray-800 shrink-0">R$ {fmt(item.subtotal)}</p>
+                    </div>
+
+                    {/* Layout thumbnail ou link PDF */}
+                    {item.layout_url && !isPdf(item.layout_url) && (
+                      <div className="mt-2 pt-2 border-t border-gray-100">
+                        <button
+                          type="button"
+                          onClick={() => setLightboxUrl(item.layout_url!)}
+                          className="group relative inline-block"
+                          title="Clique para ampliar"
+                        >
+                          <img
+                            src={item.layout_url}
+                            alt={`Layout ${item.nome}`}
+                            className="h-16 w-auto rounded-lg border border-gray-200 object-cover hover:opacity-80 transition-opacity cursor-zoom-in"
+                          />
+                          <span className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="bg-black/50 text-white text-xs px-1.5 py-0.5 rounded">ampliar</span>
+                          </span>
+                        </button>
+                      </div>
+                    )}
+                    {item.layout_url && isPdf(item.layout_url) && (
+                      <div className="mt-2 pt-2 border-t border-gray-100">
+                        <a
+                          href={item.layout_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-xs text-blue-500 hover:underline"
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                          Ver PDF
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
-          )}
 
-          {isGestor && (
-            <div className="flex items-center gap-2 pt-2 border-t border-gray-200">
-              {pedido.status === 'recusado' ? (
-                /* Pedido recusado: apenas botão excluir */
-                <button
-                  onClick={() => {
-                    if (!confirm('Excluir este pedido permanentemente?')) return
-                    handle('excluir', () => excluirPedido(pedido.id))
-                  }}
-                  disabled={isPending}
-                  className="text-sm bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 disabled:opacity-50 transition-colors font-medium"
-                >
-                  {loadingAction === 'excluir' ? 'Excluindo...' : 'Excluir pedido'}
-                </button>
-              ) : (
-                /* Pendente ou aprovado: aprovar, recusar, excluir */
-                <>
-                  {pedido.status !== 'aprovado' && (
-                    <button
-                      onClick={() => handle('aprovar', () => atualizarStatus(pedido.id, 'aprovado'))}
-                      disabled={isPending}
-                      className="text-sm bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors font-medium"
-                    >
-                      {loadingAction === 'aprovar' ? 'Aprovando...' : 'Aprovar'}
-                    </button>
-                  )}
-                  <button
-                    onClick={() => handle('recusar', () => atualizarStatus(pedido.id, 'recusado'))}
-                    disabled={isPending}
-                    className="text-sm bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 disabled:opacity-50 transition-colors font-medium"
-                  >
-                    {loadingAction === 'recusar' ? 'Recusando...' : 'Recusar'}
-                  </button>
+            {(pedido.transportadora || pedido.observacoes) && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                {pedido.transportadora && (
+                  <div>
+                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Transportadora</p>
+                    <p className="text-gray-700">{pedido.transportadora}</p>
+                  </div>
+                )}
+                {pedido.observacoes && (
+                  <div>
+                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Observações</p>
+                    <p className="text-gray-700">{pedido.observacoes}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {isGestor && (
+              <div className="flex items-center gap-2 pt-2 border-t border-gray-200">
+                {pedido.status === 'recusado' ? (
                   <button
                     onClick={() => {
                       if (!confirm('Excluir este pedido permanentemente?')) return
                       handle('excluir', () => excluirPedido(pedido.id))
                     }}
                     disabled={isPending}
-                    className="text-sm border border-red-200 text-red-500 px-4 py-2 rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors ml-auto"
+                    className="text-sm bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 disabled:opacity-50 transition-colors font-medium"
                   >
-                    {loadingAction === 'excluir' ? 'Excluindo...' : 'Excluir'}
+                    {loadingAction === 'excluir' ? 'Excluindo...' : 'Excluir pedido'}
                   </button>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+                ) : (
+                  <>
+                    {pedido.status !== 'aprovado' && (
+                      <button
+                        onClick={() => handle('aprovar', () => atualizarStatus(pedido.id, 'aprovado'))}
+                        disabled={isPending}
+                        className="text-sm bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors font-medium"
+                      >
+                        {loadingAction === 'aprovar' ? 'Aprovando...' : 'Aprovar'}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handle('recusar', () => atualizarStatus(pedido.id, 'recusado'))}
+                      disabled={isPending}
+                      className="text-sm bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 disabled:opacity-50 transition-colors font-medium"
+                    >
+                      {loadingAction === 'recusar' ? 'Recusando...' : 'Recusar'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (!confirm('Excluir este pedido permanentemente?')) return
+                        handle('excluir', () => excluirPedido(pedido.id))
+                      }}
+                      disabled={isPending}
+                      className="text-sm border border-red-200 text-red-500 px-4 py-2 rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors ml-auto"
+                    >
+                      {loadingAction === 'excluir' ? 'Excluindo...' : 'Excluir'}
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </>
   )
 }
