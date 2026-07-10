@@ -31,6 +31,7 @@ interface Parede {
   deducoes: Deducao[];
   layout_url?: string;
   layoutUploading?: boolean;
+  layoutError?: string;
 }
 
 interface Props {
@@ -168,7 +169,7 @@ export default function PedidoForm({ userId }: Props) {
   }
 
   async function uploadLayout(paredeId: string, file: File) {
-    updateParede(paredeId, { layoutUploading: true });
+    updateParede(paredeId, { layoutUploading: true, layoutError: undefined });
     try {
       const ext = file.name.split(".").pop();
       const path = (userId || "anonimo") + "/" + paredeId + "-" + Date.now() + "." + ext;
@@ -176,8 +177,9 @@ export default function PedidoForm({ userId }: Props) {
       if (error) throw error;
       const { data } = getSupabase().storage.from("layouts").getPublicUrl(path);
       updateParede(paredeId, { layout_url: data.publicUrl, layoutUploading: false });
-    } catch {
-      updateParede(paredeId, { layoutUploading: false });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erro ao enviar arquivo.";
+      updateParede(paredeId, { layoutUploading: false, layoutError: msg });
     }
   }
 
@@ -303,6 +305,7 @@ export default function PedidoForm({ userId }: Props) {
             const ded = areaDeducoes(parede);
             const liq = areaLiquida(parede);
             const sub = subtotal(parede);
+            const isPdf = /\.pdf$/i.test(parede.layout_url || "");
             return (
               <div key={parede.id} className="border border-gray-200 rounded-xl overflow-hidden">
                 <div className="flex items-center gap-3 bg-gray-50 px-4 py-3 border-b border-gray-200">
@@ -376,17 +379,35 @@ export default function PedidoForm({ userId }: Props) {
                       <span className="ml-auto text-sm font-semibold text-gray-800">R$ {fmt(sub)}</span>
                     </div>
                   )}
-                  <div className="flex items-center gap-3 pt-1 border-t border-gray-100">
-                    <label className={`cursor-pointer flex items-center gap-1.5 text-xs border border-dashed rounded-lg px-3 py-1.5 transition-colors ${parede.layoutUploading ? "border-gray-200 text-gray-300 cursor-not-allowed" : "border-blue-300 text-blue-500 hover:bg-blue-50"}`}>
-                      <input type="file" accept="image/*,.pdf" className="hidden" disabled={!!parede.layoutUploading}
-                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLayout(parede.id, f); e.target.value = ""; }} />
-                      {parede.layoutUploading ? "Enviando..." : parede.layout_url ? "Trocar layout" : "+ Anexar layout"}
-                    </label>
-                    {parede.layout_url && (
-                      <a href={parede.layout_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline truncate max-w-xs">Ver layout</a>
+                  {/* Layout upload + preview */}
+                  <div className="pt-1 border-t border-gray-100">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <label className={`cursor-pointer flex items-center gap-1.5 text-xs border border-dashed rounded-lg px-3 py-1.5 transition-colors ${parede.layoutUploading ? "border-gray-200 text-gray-300 cursor-not-allowed" : "border-blue-300 text-blue-500 hover:bg-blue-50"}`}>
+                        <input type="file" accept="image/*,application/pdf" className="hidden" disabled={!!parede.layoutUploading}
+                          onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLayout(parede.id, f); e.target.value = ""; }} />
+                        {parede.layoutUploading ? "Enviando..." : parede.layout_url ? "Trocar layout" : "+ Anexar layout"}
+                      </label>
+                      {parede.layout_url && (
+                        <button type="button" onClick={() => updateParede(parede.id, { layout_url: undefined })} className="text-xs text-gray-400 hover:text-red-400 transition-colors">remover</button>
+                      )}
+                    </div>
+                    {parede.layoutError && (
+                      <p className="text-xs text-red-500 mt-1.5">{parede.layoutError}</p>
                     )}
-                    {parede.layout_url && (
-                      <button type="button" onClick={() => updateParede(parede.id, { layout_url: undefined })} className="text-xs text-gray-400 hover:text-red-400 transition-colors">remover</button>
+                    {parede.layout_url && !isPdf && (
+                      <a href={parede.layout_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block">
+                        <img
+                          src={parede.layout_url}
+                          alt={`Layout ${parede.nome}`}
+                          className="h-20 w-auto rounded-lg border border-gray-200 object-cover hover:opacity-75 transition-opacity"
+                        />
+                      </a>
+                    )}
+                    {parede.layout_url && isPdf && (
+                      <a href={parede.layout_url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1.5 text-xs text-blue-500 hover:underline">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        Ver PDF
+                      </a>
                     )}
                   </div>
                 </div>
